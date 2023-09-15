@@ -1,7 +1,7 @@
 const xlsToJson = require('xls-to-json');
 const db = require('../database/connect');
 
-const filePath = 'D:\\todo-app\\backend\\book1.xls'; // Điều chỉnh thành đúng đường dẫn tới tệp XLS của bạn
+const filePath = 'C:\\Users\\Admin\\GolandProjects\\todo-app\\backend\\book1.xls'; // Điều chỉnh thành đúng đường dẫn tới tệp XLS của bạn
 
 xlsToJson(
     {
@@ -23,8 +23,8 @@ function ImporToDatabase(dataExcel) {
     const districts = []
     const wards = []
 
-    let indexCity = 1
-    let indexDistrict = 1
+    let indexCity = 0
+    let indexDistrict = 0
 
     for (const data of dataExcel) {
         const cityName = data['Tỉnh Thành Phố'];
@@ -60,63 +60,84 @@ function ImporToDatabase(dataExcel) {
 
         const isWardExist = wards.some(ward =>ward.wardName === wardName &&ward.wardCode === parseInt(wardCode));
         if (!isWardExist) {
-            const wardObj = {
-                wardName: wardName,
-                wardCode: parseInt(wardCode),
-                districtID: indexDistrict
-            };
-            wards.push(wardObj);
+            if (wardName !== ''){
+                const wardObj = {
+                    wardName: wardName,
+                    wardCode: parseInt(wardCode),
+                    districtID: indexDistrict
+                };
+                wards.push(wardObj);
+            }
         }
     }
     ImportCityToDatabase(citys,districts,wards)
 
 }
 
-function ImportWardToDatabase(values) {
+function ImportWardToDatabase(wards) {
+    const batchSize = 1000;
     const query = `INSERT INTO wards (ward_name, ward_code,districtID) VALUES`
-    const insertValues = []
-    for (const ward of values) {
+    let insertValues = []
+
+    wards.forEach((ward , index) => {
         const wardValue = `('${ward.wardName}',${ward.wardCode},${ward.districtID})`
         insertValues.push(wardValue)
-    }
-    db.query(query + insertValues.join(','), (err) => {
-        if (err) {
-            console.error('Lỗi khi thêm dữ liệu vào bảng city:', err);
-        } else {
-            console.log('Dữ liệu đã được thêm vào bảng city');
+
+        if(insertValues.length === batchSize || index === wards.length - 1) {
+            const insertQuery = query + insertValues.join(',');
+
+            db.query(insertQuery, (err) => {
+                if (err) {
+                    console.error('Lỗi khi thêm dữ liệu vào bảng wards:', err);
+                }
+            });
+            insertValues = [];
         }
     })
+    console.log('Dữ liệu đã được thêm vào bảng wards');
 }
 
-function ImportDistrictToDatabase(values) {
-    const query = `INSERT INTO districts (district_name, district_code,cityID) VALUES`
-    const insertValues = []
-    for (const district of values) {
-        const districtValue = `('${district.districtName}',${district.districtCode},${district.cityID})`
-        insertValues.push(districtValue)
-    }
-    db.query(query + insertValues.join(','), (err) => {
-        if (err) {
-            console.error('Lỗi khi thêm dữ liệu vào bảng city:', err);
-        } else {
-            console.log('Dữ liệu đã được thêm vào bảng city');
+function ImportDistrictToDatabase(districts, wards) {
+    const batchSize = 100; // Số lượng phần tử mỗi lô
+    const query = `INSERT INTO districts (district_name, district_code, cityID) VALUES`;
+    let insertValues = [];
+
+    districts.forEach((district, index) => {
+        const districtValue = `('${district.districtName}', ${district.districtCode}, ${district.cityID})`;
+        insertValues.push(districtValue);
+
+        // Nếu số lượng phần tử trong lô đạt tới giới hạn hoặc đã xử lý hết dữ liệu
+        if (insertValues.length === batchSize || index === districts.length - 1) {
+            const insertQuery = query + insertValues.join(',');
+
+            db.query(insertQuery, (err) => {
+                if (err) {
+                    console.error('Lỗi khi thêm dữ liệu vào bảng districts:', err);
+                }
+            });
+
+            insertValues = []; // Đặt lại mảng insertValues cho lô tiếp theo
         }
-    })
+    });
+
+    // Sau khi hoàn thành xử lý districts, bạn có thể tiếp tục xử lý wards
+    console.log('Dữ liệu đã được thêm vào bảng districts');
+    ImportWardToDatabase(wards);
 }
 
-function ImportCityToDatabase(values) {
+
+function ImportCityToDatabase(citys , districts , wards) {
     const query = `INSERT INTO cities (city_name, city_code) VALUES`
     const insertValues = []
-    for (const city of values) {
+    for (const city of citys) {
         const cityValue = `('${city.cityName}',${city.cityCode})`
         insertValues.push(cityValue)
     }
     db.query(query + insertValues.join(','), (err) => {
         if (err) {
             console.error('Lỗi khi thêm dữ liệu vào bảng city:', err);
-        } else {
-            console.log('Dữ liệu đã được thêm vào bảng city');
         }
     })
-    ImportDistrictToDatabase()
+    console.log('Dữ liệu đã được thêm vào bảng city');
+    ImportDistrictToDatabase(districts,wards)
 }
