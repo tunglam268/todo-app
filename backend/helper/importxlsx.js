@@ -1,7 +1,7 @@
 const xlsToJson = require('xls-to-json');
 const db = require('../database/connect');
 
-const filePath = 'C:\\Users\\Admin\\GolandProjects\\todo-app\\backend\\book1.xls'; // Điều chỉnh thành đúng đường dẫn tới tệp XLS của bạn
+const filePath = '/home/lam/IdeaProjects/todo-app/backend/book1.xls'; // Điều chỉnh thành đúng đường dẫn tới tệp XLS của bạn
 
 xlsToJson(
     {
@@ -13,13 +13,13 @@ xlsToJson(
         } else {
             //   console.log('Dữ liệu từ tệp XLS:');
             //   console.log(result[0]['Tỉnh Thành Phố']);
-            ImporToDatabase(result)
+            ImportToDatabase(result)
         }
     }
 );
 
-function ImporToDatabase(dataExcel) {
-    const citys = []
+function ImportToDatabase(dataExcel) {
+    const cities = []
     const districts = []
     const wards = []
 
@@ -36,14 +36,14 @@ function ImporToDatabase(dataExcel) {
         const wardName = data['Phường Xã'];
         const wardCode = data['Mã PX'];
 
-        const isCityExist = citys.some(city =>city.cityName === cityName && city.cityCode ===  parseInt(cityCode));
+        const isCityExist = cities.some(city =>city.cityName === cityName && city.cityCode ===  parseInt(cityCode));
         if (!isCityExist) {
             const cityObj = {
                 cityName: cityName,
                 cityCode: parseInt(cityCode)
             };
 
-            citys.push(cityObj);
+            cities.push(cityObj);
             indexCity++;
         }
 
@@ -70,7 +70,7 @@ function ImporToDatabase(dataExcel) {
             }
         }
     }
-    ImportCityToDatabase(citys,districts,wards)
+    ImportCityToDatabase(cities,districts,wards)
 
 }
 

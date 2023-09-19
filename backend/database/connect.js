@@ -3,9 +3,9 @@ const mysql = require('mysql2');
 // Tạo kết nối MySQL
 const db = mysql.createConnection({
   host: 'localhost',
-  user: 'root',
-  password: 'tungl@mdz268',
-  database: 'todo_app',
+  user: 'admin',
+  password: '123456',
+  database: 'test',
 });
 
 db.connect((err) => {
