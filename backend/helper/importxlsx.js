@@ -126,10 +126,10 @@ function ImportDistrictToDatabase(districts, wards) {
 }
 
 
-function ImportCityToDatabase(citys , districts , wards) {
+function ImportCityToDatabase(cities , districts , wards) {
     const query = `INSERT INTO cities (city_name, city_code) VALUES`
     const insertValues = []
-    for (const city of citys) {
+    for (const city of cities) {
         const cityValue = `('${city.cityName}',${city.cityCode})`
         insertValues.push(cityValue)
     }
